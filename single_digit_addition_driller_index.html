@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Single‑Digit Addition Driller</title>
+  <style>
+    :root{
+      --bg:#0f172a;          /* slate-900 */
+      --card:#111827;        /* gray-900 */
+      --muted:#94a3b8;       /* slate-400 */
+      --text:#e2e8f0;        /* slate-200 */
+      --accent:#22c55e;      /* green-500 */
+      --danger:#ef4444;      /* red-500 */
+      --warning:#f59e0b;     /* amber-500 */
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: radial-gradient(1200px 800px at 80% -10%, #1f2937 0%, var(--bg) 60%);
+      color:var(--text); display:grid; place-items:center;
+    }
+    .app{ width:min(900px, 92vw); }
+    .card{ background:linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02)); border:1px solid rgba(255,255,255,0.08); border-radius:24px; padding:28px; box-shadow: 0 20px 60px rgba(0,0,0,0.4);}
+    .row{ display:flex; align-items:center; gap:14px; flex-wrap:wrap}
+    .title{ font-size:clamp(22px, 3vw, 28px); opacity:.9; letter-spacing:.3px; margin:0 0 8px;}
+    .sub{ color:var(--muted); margin:0 0 18px; font-size:14px}
+
+    .problem{ display:flex; align-items:center; justify-content:center; gap:16px; margin:12px 0 6px; }
+    .num{ font-weight:800; font-size:clamp(64px, 11vw, 120px); line-height:1; letter-spacing:1px; text-shadow: 0 6px 20px rgba(0,0,0,.5)}
+    .op{ font-weight:800; font-size:clamp(48px, 9vw, 96px); opacity:.9 }
+
+    .answer-wrap{ display:flex; align-items:center; gap:14px; margin-top:10px }
+    input[type="number"]{
+      width:140px; max-width:42vw; padding:14px 16px; font-size:28px; font-weight:700; text-align:center;
+      color:var(--text); background:#0b1220; border:2px solid rgba(255,255,255,.1); border-radius:16px; outline:none; transition:.15s border-color, .15s transform;
+    }
+    input[type="number"]:focus{ border-color:rgba(255,255,255,.35) }
+    button{
+      cursor:pointer; padding:14px 18px; font-weight:700; border-radius:16px; border:1px solid rgba(255,255,255,.12);
+      background:#0b1220; color:var(--text); transition: .15s transform, .15s background, .15s border-color; 
+    }
+    button:hover{ transform:translateY(-1px); border-color:rgba(255,255,255,.28) }
+    .primary{ background:linear-gradient(180deg, #22c55e, #16a34a); border-color:#16a34a; color:#051b0e }
+    .ghost{ background:transparent }
+
+    .stats{ display:flex; gap:14px; flex-wrap:wrap; margin-top:16px }
+    .chip{ padding:8px 12px; border-radius:999px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.08); font-size:13px }
+    .chip strong{ font-weight:800 }
+
+    .feedback{ height:24px; margin-top:8px; font-weight:700 }
+    .ok{ color:var(--accent) }
+    .bad{ color:var(--danger) }
+
+    .shake{ animation:shake .3s linear }
+    @keyframes shake{ 0%{transform:translateX(0)} 20%{transform:translateX(-6px)} 50%{transform:translateX(5px)} 80%{transform:translateX(-3px)} 100%{transform:translateX(0)} }
+
+    .controls{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:10px; color:var(--muted); font-size:13px }
+    .toggle{ display:inline-flex; align-items:center; gap:8px; cursor:pointer; user-select:none }
+    .toggle input{ appearance:none; width:42px; height:26px; border-radius:999px; background:#0b1220; border:1px solid rgba(255,255,255,.18); position:relative; outline:none; transition:.18s background }
+    .toggle input:checked{ background:#14532d }
+    .toggle input:before{ content:""; position:absolute; inset:3px auto 3px 3px; width:18px; border-radius:999px; background:#e5e7eb; transition:.18s left }
+    .toggle input:checked:before{ left:21px }
+
+    .footer{ margin-top:18px; color:var(--muted); font-size:12px }
+    .kbd{ padding:.2em .45em; border-radius:6px; border:1px solid rgba(255,255,255,.15); background:rgba(255,255,255,.06); font-weight:700 }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="card" id="card">
+      <h1 class="title">Single‑Digit Addition</h1>
+      <p class="sub">Answer as fast as you can. New problem appears the moment you get it right.</p>
+
+      <div class="problem" aria-live="polite">
+        <span class="num" id="a">?</span>
+        <span class="op">+</span>
+        <span class="num" id="b">?</span>
+        <span class="op">=</span>
+        <span class="num" style="opacity:.35">?</span>
+      </div>
+
+      <div class="answer-wrap">
+        <input id="answer" type="number" inputmode="numeric" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Your answer" />
+        <button class="primary" id="submit">Submit <span aria-hidden>↵</span></button>
+        <button class="ghost" id="skip" title="Show a new problem">Skip</button>
+      </div>
+
+      <div class="feedback" id="feedback" role="status" aria-live="polite"></div>
+
+      <div class="stats" id="stats">
+        <div class="chip">Correct: <strong id="correct">0</strong></div>
+        <div class="chip">Streak: <strong id="streak">0</strong></div>
+        <div class="chip">Best: <strong id="best">0</strong></div>
+        <div class="chip">Time/solve: <strong id="tps">—</strong></div>
+      </div>
+
+      <div class="controls">
+        <label class="toggle"><input id="zeroToggle" type="checkbox" checked> Allow 0–9</label>
+        <label class="toggle"><input id="audioToggle" type="checkbox"> Sound</label>
+      </div>
+
+      <p class="footer">Tip: hit <span class="kbd">Enter</span> to submit, <span class="kbd">Esc</span> to skip. Fully offline, no tracking.</p>
+    </section>
+  </main>
+
+  <audio id="ding" preload="auto">
+    <source src="data:audio/wav;base64,UklGRjgAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABYBZGluZwAA" type="audio/wav" />
+  </audio>
+  <audio id="buzz" preload="auto">
+    <source src="data:audio/wav;base64,UklGRjgAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABYBYnV6egAA" type="audio/wav" />
+  </audio>
+
+  <script>
+    const el = (id)=>document.getElementById(id);
+    const aEl=el('a'), bEl=el('b'), ansEl=el('answer'), fbEl=el('feedback');
+    const correctEl=el('correct'), streakEl=el('streak'), bestEl=el('best'), tpsEl=el('tps');
+    const submitBtn=el('submit'), skipBtn=el('skip');
+    const zeroToggle=el('zeroToggle'), audioToggle=el('audioToggle');
+    const ding=el('ding'), buzz=el('buzz');
+
+    let a=0, b=0, correct=0, streak=0, best=Number(localStorage.getItem('bestAddStreak')||0);
+    let lastStart = performance.now();
+
+    function randDigit(includeZero){
+      return includeZero ? Math.floor(Math.random()*10) : (1+Math.floor(Math.random()*9));
+    }
+
+    function newProblem(){
+      const allowZero = zeroToggle.checked;
+      a = randDigit(allowZero);
+      b = randDigit(allowZero);
+      aEl.textContent=a; bEl.textContent=b;
+      ansEl.value=''; ansEl.focus();
+      fbEl.textContent='';
+      lastStart = performance.now();
+    }
+
+    function updateStats(ms){
+      correctEl.textContent = correct;
+      streakEl.textContent = streak;
+      bestEl.textContent = best;
+      if(ms){ tpsEl.textContent = (ms/1000).toFixed(2)+ 's'; }
+    }
+
+    function handleSubmit(){
+      const val = ansEl.value.trim();
+      if(val==='') { ansEl.focus(); return; }
+      const ms = performance.now() - lastStart;
+      const right = (Number(val)===a+b);
+      if(right){
+        correct++; streak++; if(streak>best){ best=streak; localStorage.setItem('bestAddStreak', String(best)); }
+        fbEl.textContent = 'Correct!'; fbEl.className='feedback ok';
+        if(audioToggle.checked) try{ ding.currentTime=0; ding.play(); }catch(e){}
+        updateStats(ms);
+        newProblem();
+      }else{
+        streak=0; updateStats();
+        fbEl.textContent = 'Try again'; fbEl.className='feedback bad';
+        if(audioToggle.checked) try{ buzz.currentTime=0; buzz.play(); }catch(e){}
+        ansEl.classList.remove('shake'); void ansEl.offsetWidth; ansEl.classList.add('shake');
+        ansEl.select();
+      }
+    }
+
+    submitBtn.addEventListener('click', handleSubmit);
+    skipBtn.addEventListener('click', ()=>{ streak=0; updateStats(); newProblem(); });
+
+    document.addEventListener('keydown', (e)=>{
+      if(e.key==='Enter'){ e.preventDefault(); handleSubmit(); }
+      if(e.key==='Escape'){ e.preventDefault(); streak=0; updateStats(); newProblem(); }
+    });
+
+    // init
+    bestEl.textContent = best; newProblem(); updateStats();
+  </script>
+</body>
+</html>
